@@ -5,6 +5,7 @@ from uuid import uuid4
 from kafka_handler import publish
 import random
 import redis
+import sys
 
 redis_server = redis.Redis("localhost")
 
@@ -57,6 +58,8 @@ def fire(records):
     for record in records:
         publish(record)
         redis_server.rpush('bids', record)
+        sys.stdout.write("bid: %s \r" % record)
+        sys.stdout.flush()
 
 def main(opts):
     started = int(time.time())
