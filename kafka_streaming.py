@@ -95,15 +95,15 @@ if __name__ == "__main__":
     # except:
     #     pass
 
-    # id_frequency = reduced_window.foreachRDD(lambda frame: frame.map(lambda x: (x[0], frequency_time_window(x[1], 10))))
-    id_frequency = reduced_window.map(lambda x: (x[0], frequency_time_window(x[1], 1)))
-
-
-    id_frequency.map(lambda x: x[1]).foreachRDD(mean_stdv)
     def update_function(new_values, running_value):
         return max(new_values, running_value if running_value else new_values)
 
+    id_frequency = reduced_window.map(lambda x: (x[0], frequency_time_window(x[1], 1)))
     running_id_freq = id_frequency.updateStateByKey(update_function)
+    # id_frequency = reduced_window.foreachRDD(lambda frame: frame.map(lambda x: (x[0], frequency_time_window(x[1], 10))))
+
+    id_frequency.map(lambda x: x[1]).foreachRDD(mean_stdv)
+
     # gaussian_model = get_gaussian(id_frequency.map(lambda x: x[1]).collect())
     tolerance_lev = 2
 
