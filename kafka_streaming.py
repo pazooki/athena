@@ -45,15 +45,6 @@ def write_to_redis(rdd):
             pass
 
 
-"""
-Audience ----Twit---> #MehrdadIsAwesome Whatever ----> Kafka ------> Spark Dstream ----->
-    If __the frequency of the twits__ from __a source__
-        __is not within__
-            __the normal distribution of__
-            __the frequency of the twits__ from __the entire time window of the experiment__
-"""
-
-
 if __name__ == "__main__":
     sc = SparkContext(appName="Athena-Fraud-Detector")
     slice_duration = 5
@@ -87,8 +78,15 @@ if __name__ == "__main__":
     #     pass
 
     # id_frequency = reduced_window.foreachRDD(lambda frame: frame.map(lambda x: (x[0], frequency_time_window(x[1], 10))))
-    id_frequency = reduced_window.map(lambda x: (x[0], frequency_time_window(x[1], 10)))
-
+    id_frequency = reduced_window.map(lambda x: (x[0], frequency_time_window(x[1], 1)))
+    
+    # mean = id_frequency.map(lambda x: x[1]).mean()
+    # std = id_frequency.map(lambda x: x[1]).sampleStdev()
+    def updateFunction(newValues, runningValue):
+        if runningValue is None:
+	        runningValue = 0
+	return max(newValues, runningValue)
+    running_id_freq = id_frequency.updateStateByKey(updateFunction) 
     # gaussian_model = get_gaussian(id_frequency.map(lambda x: x[1]).collect())
     tolerance_lev = 2
 
@@ -110,3 +108,4 @@ if __name__ == "__main__":
 
     ssc.start()
     ssc.awaitTermination()
+
