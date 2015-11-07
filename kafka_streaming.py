@@ -45,22 +45,22 @@ def write_to_redis(rdd):
             pass
 
 
-def mean_stdv(rdd):
-    import redis
-    redis_server = redis.Redis("localhost")
-    mean_v = 0
-    count = 0
-    recs = rdd.collect()
-    for rec in recs:
-        count += 1
-        mean_v += rec[1]
-    mean_result = mean_v / count
-    stdv = 0
-    for rec in recs:
-        stdv += (rec[1] - mean_result) ** 2
-    stdv = (stdv / count) ** 0.5
-    redis_server.set('mean', mean_result)
-    redis_server.set('standard_deviation', stdv)
+# def mean_stdv(rdd):
+#     import redis
+#     redis_server = redis.Redis("localhost")
+#     mean_v = 0
+#     count = 0
+#     recs = rdd.collect()
+#     for rec in recs:
+#         count += 1
+#         mean_v += rec[1]
+#     mean_result = mean_v / count
+#     stdv = 0
+#     for rec in recs:
+#         stdv += (rec[1] - mean_result) ** 2
+#     stdv = (stdv / count) ** 0.5
+#     redis_server.set('mean', mean_result)
+#     redis_server.set('standard_deviation', stdv)
 
 
 if __name__ == "__main__":
@@ -95,14 +95,14 @@ if __name__ == "__main__":
     # except:
     #     pass
 
-    def update_function(new_values, running_value):
-        return max(new_values, running_value if running_value else new_values)
+    # def update_function(new_values, running_value):
+    #     return max(new_values, running_value if running_value else new_values)
+    #
+    # id_frequency = reduced_window.map(lambda x: (x[0], frequency_time_window(x[1], 1)))
+    # running_id_freq = id_frequency.updateStateByKey(update_function)
+    id_frequency = reduced_window.foreachRDD(lambda frame: frame.map(lambda x: (x[0], frequency_time_window(x[1], 10))))
 
-    id_frequency = reduced_window.map(lambda x: (x[0], frequency_time_window(x[1], 1)))
-    running_id_freq = id_frequency.updateStateByKey(update_function)
-    # id_frequency = reduced_window.foreachRDD(lambda frame: frame.map(lambda x: (x[0], frequency_time_window(x[1], 10))))
-
-    id_frequency.map(lambda x: x[1]).foreachRDD(mean_stdv)
+    # id_frequency.map(lambda x: x[1]).foreachRDD(mean_stdv)
 
     # gaussian_model = get_gaussian(id_frequency.map(lambda x: x[1]).collect())
     tolerance_lev = 2
