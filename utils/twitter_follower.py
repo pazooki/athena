@@ -1,80 +1,30 @@
-import OAuth as OAuth
-from Twython import Twython
+#Import the necessary methods from tweepy library
+from tweepy.streaming import StreamListener
+from tweepy import OAuthHandler
+from tweepy import Stream
 
-# from utils.kafka_handler import publish
+#Variables that contains the user credentials to access Twitter API
+access_token = 'MkeqjMDbMOgUkhxwN2W5JKyy4'
+access_token_secret = 'FIwxuICnVNYwkoNDKNogYKyug7GhAmcbvvxgMeclSnPOaMfEhd'
+consumer_key = '3287930315-sQdNkOJVrdk9R4nyIV8rm0I50lUkTu3XAXOyPal'
+consumer_secret = 'tobkhrxYRYU7bdcFEApqom6wbximb3yl0U1CRyWbWyuS5'
 
-TWITTER_APP_KEY = 'MkeqjMDbMOgUkhxwN2W5JKyy4'
-TWITTER_APP_KEY_SECRET = 'FIwxuICnVNYwkoNDKNogYKyug7GhAmcbvvxgMeclSnPOaMfEhd'
-TWITTER_ACCESS_TOKEN = '3287930315-sQdNkOJVrdk9R4nyIV8rm0I50lUkTu3XAXOyPal'
-TWITTER_ACCESS_TOKEN_SECRET = 'tobkhrxYRYU7bdcFEApqom6wbximb3yl0U1CRyWbWyuS5'
 
-#!/usr/bin/python
+#This is a basic listener that just prints received tweets to stdout.
+class StdOutListener(StreamListener):
+    def on_data(self, data):
+        print data
+        return True
 
-#-----------------------------------------------------------------------
-# twitter-stream-format:
-#  - ultra-real-time stream of twitter's public timeline.
-#    does some fancy output formatting.
-#-----------------------------------------------------------------------
+    def on_error(self, status):
+        print status
 
-from twitter import *
-import re
 
-search_term = "#TorontoApacheSpark"
-
-#-----------------------------------------------------------------------
-# import a load of external features, for text display and date handling
-# you will need the termcolor module:
-#
-# pip install termcolor
-#-----------------------------------------------------------------------
-from time import strftime
-from textwrap import fill
-from email.utils import parsedate
-from twitter import api.Twython
-
-#-----------------------------------------------------------------------
-# load our API credentials
-#-----------------------------------------------------------------------
-config = dict(
-    TWITTER_APP_KEY = 'MkeqjMDbMOgUkhxwN2W5JKyy4',
-    TWITTER_APP_KEY_SECRET = 'FIwxuICnVNYwkoNDKNogYKyug7GhAmcbvvxgMeclSnPOaMfEhd',
-    TWITTER_ACCESS_TOKEN = '3287930315-sQdNkOJVrdk9R4nyIV8rm0I50lUkTu3XAXOyPal',
-    TWITTER_ACCESS_TOKEN_SECRET = 'tobkhrxYRYU7bdcFEApqom6wbximb3yl0U1CRyWbWyuS5'
-)
-execfile("config.py", config)
-
-#-----------------------------------------------------------------------
-# create twitter API object
-#-----------------------------------------------------------------------
-auth = OAuth(config["access_key"], config["access_secret"], config["consumer_key"], config["consumer_secret"])
-stream = TwitterStream(auth = auth, secure = True)
-
-#-----------------------------------------------------------------------
-# iterate over tweets matching this filter text
-#-----------------------------------------------------------------------
-tweet_iter = stream.statuses.filter(track = search_term)
-
-pattern = re.compile("%s" % search_term, re.IGNORECASE)
-
-for tweet in tweet_iter:
-	# turn the date string into a date object that python can handle
-	timestamp = parsedate(tweet["created_at"])
-
-	# now format this nicely into HH:MM:SS format
-	timetext = strftime("%H:%M:%S", timestamp)
-
-	# colour our tweet's time, user and text
-	time_colored = colored(timetext, color = "white", attrs = [ "bold" ])
-	user_colored = colored(tweet["user"]["screen_name"], "green")
-	text_colored = tweet["text"]
-
-	# replace each instance of our search terms with a highlighted version
-	text_colored = pattern.sub(colored(search_term.upper(), "yellow"), text_colored)
-
-	# add some indenting to each line and wrap the text nicely
-	indent = " " * 11
-	text_colored = fill(text_colored, 80, initial_indent = indent, subsequent_indent = indent)
-
-	# now output our tweet
-	print "(%s) @%s" % (time_colored, user_colored)
-	print "%s" % (text_colored)
+if __name__ == '__main__':
+    #This handles Twitter authetification and the connection to Twitter Streaming API
+    l = StdOutListener()
+    auth = OAuthHandler(consumer_key, consumer_secret)
+    auth.set_access_token(access_token, access_token_secret)
+    stream = Stream(auth, l)
+    #This line filter Twitter Streams to capture data by the keywords: 'TorontoApacheSpark', 'MehrdadPyCon'
+    stream.filter(track=['#TorontoApacheSpark', '#MehrdadPyCon'])

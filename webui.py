@@ -1,4 +1,3 @@
-from datetime import date
 import tornado.escape
 import tornado.ioloop
 import tornado.web
@@ -15,6 +14,7 @@ def takeout_anomalies(n):
     for i in xrange(n):
         yield redis_server.rpop('anomalies')
 
+
 class BidsHandler(tornado.web.RequestHandler):
     def get(self):
         response = {
@@ -23,6 +23,7 @@ class BidsHandler(tornado.web.RequestHandler):
         }
         print response
         self.write(response)
+
 
 application = tornado.web.Application([
     (r"/bids", BidsHandler)
