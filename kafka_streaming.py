@@ -1,10 +1,10 @@
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
 from pyspark.streaming.kafka import KafkaUtils
-
 import json
 import numpy as np
 import time
+
 
 def frequency_time_window(list_timestamp, time_window):
     if len(list_timestamp) == 1:
@@ -39,7 +39,7 @@ def write_to_redis(rdd):
     redis_server = redis.Redis("localhost")
     for rec in rdd.collect():
         try:
-            print('X'*100, json.dumps(rec), 'X'*100)
+            print('X' * 100, json.dumps(rec), 'X' * 100)
             redis_server.rpush('anomalies', json.dumps(rec))
         except Exception as ex:
             pass
@@ -59,10 +59,10 @@ if __name__ == "__main__":
     # athena_rdd = sc.textFile('/var/athena/data/windows')
     # athena_old = athena_rdd.map(json.loads).map(lambda x: (x[0], x[1]))
 
-    window = bid_stream\
-        .map(lambda x: json.loads(x[1]))\
-        .map(lambda x: (x.get('uuid'), [x.get('timestamp')]))\
-        .reduceByKey(lambda x, y: x+y)
+    window = bid_stream \
+        .map(lambda x: json.loads(x[1])) \
+        .map(lambda x: (x.get('uuid'), [x.get('timestamp')])) \
+        .reduceByKey(lambda x, y: x + y)
     # if window.count() > 0:
     #     window\
     #     .map(json.dumps)\
@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
     ssc.checkpoint('/var/athena/data/')
 
-    reduced_window = window.reduceByKeyAndWindow(lambda x, y: x+y, None, 10, slice_duration)
+    reduced_window = window.reduceByKeyAndWindow(lambda x, y: x + y, None, 10, slice_duration)
     # reduced_window.pprint()
     # try:
     #     reduced_window.foreachRDD(lambda frame: frame.filter(lambda x: len(x[1]) > 1).saveAsTextFile(path))
@@ -79,20 +79,23 @@ if __name__ == "__main__":
 
     # id_frequency = reduced_window.foreachRDD(lambda frame: frame.map(lambda x: (x[0], frequency_time_window(x[1], 10))))
     id_frequency = reduced_window.map(lambda x: (x[0], frequency_time_window(x[1], 1)))
-    
+
+
     # mean = id_frequency.map(lambda x: x[1]).mean()
     # std = id_frequency.map(lambda x: x[1]).sampleStdev()
     def updateFunction(newValues, runningValue):
         if runningValue is None:
-	        runningValue = 0
-	return max(newValues, runningValue)
-    running_id_freq = id_frequency.updateStateByKey(updateFunction) 
+            runningValue = 0
+        return max(newValues, runningValue)
+
+
+    running_id_freq = id_frequency.updateStateByKey(updateFunction)
     # gaussian_model = get_gaussian(id_frequency.map(lambda x: x[1]).collect())
     tolerance_lev = 2
 
-    id_frequency\
-        .filter(lambda x: is_fraud(x[1], (2, 0.5), tolerance_lev))\
-        .map(lambda x: x[0])\
+    id_frequency \
+        .filter(lambda x: is_fraud(x[1], (2, 0.5), tolerance_lev)) \
+        .map(lambda x: x[0]) \
         .foreachRDD(write_to_redis)
 
     # print fraud_id
@@ -108,4 +111,3 @@ if __name__ == "__main__":
 
     ssc.start()
     ssc.awaitTermination()
-
