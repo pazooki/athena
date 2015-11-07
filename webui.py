@@ -17,11 +17,13 @@ def takeout_anomalies(n):
 
 class BidsHandler(tornado.web.RequestHandler):
     def get(self):
-        response = {
-            'total_bids': [ujson.loads(rec) for rec in takeout_bids(100)],
-            'anomalies': [ujson.loads(rec) for rec in takeout_anomalies(100)]
-        }
-        print response
+        try:
+            response = {
+                'total_bids': [ujson.loads(rec) for rec in takeout_bids(100)],
+                'anomalies': [ujson.loads(rec) for rec in takeout_anomalies(100) if rec]
+            }
+        except Exception as ex:
+            print ex.message
         self.write(response)
 
 
